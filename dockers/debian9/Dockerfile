@@ -1,4 +1,4 @@
-FROM rocker/r-ver:3.4
+FROM rocker/r-ver:3.6
 MAINTAINER Peter Kharchenko "peter_kharchenko@hms.harvard.edu"
 
 RUN apt-get update --yes && apt-get install --no-install-recommends --yes \
@@ -18,14 +18,23 @@ RUN apt-get update --yes && apt-get install --no-install-recommends --yes \
   curl \
   libhdf5-cpp-100 \ 
   libarmadillo7 \
-  libarmadillo-dev
+  libarmadillo-dev \
+  libboost-all-dev \
+  libbz2-dev \
+  liblzma-dev
 
 RUN \
   R -e 'chooseCRANmirror(ind=52); install.packages(c("devtools", "Rcpp","RcppArmadillo", "Matrix", "mgcv", "abind","igraph","h5","Rtsne","cluster","data.table"))'
+  
+RUN \
+  R -e 'chooseCRANmirror(ind=52); install.packages(c("BiocManager"))'
 
 RUN \
-  R -e 'source("https://bioconductor.org/biocLite.R"); biocLite(c("pcaMethods","edgeR","Rsamtools","GenomicAlignments","GenomeInfoDb","Biostrings"),suppressAutoUpdate=TRUE,ask=FALSE,suppressUpdates=TRUE)'
+  R -e 'BiocManager::install(c("Rhtslib"),update = FALSE, ask = FALSE, checkBuilt = FALSE)'
 
+RUN \
+ #R -e 'source("https://bioconductor.org/biocLite.R"); biocLite(c("pcaMethods","edgeR","Rsamtools","GenomicAlignments","GenomeInfoDb","Biostrings"),suppressAutoUpdate=TRUE,ask=FALSE,suppressUpdates=TRUE)'
+  R -e 'BiocManager::install(c("pcaMethods","edgeR","Rsamtools","GenomicAlignments","GenomeInfoDb","Biostrings"),update = FALSE, ask = FALSE, checkBuilt = FALSE)'
 
 RUN useradd -m user
 USER user
@@ -34,10 +43,10 @@ WORKDIR "/home/user"
 
 RUN \
   git clone https://github.com/velocyto-team/velocyto.R && \
-  mkdir -p ~/R/x86_64-redhat-linux-gnu-library/3.4
+  mkdir -p ~/R/x86_64-redhat-linux-gnu-library/3.6
 
 RUN \
-  echo '.libPaths(c("~/R/x86_64-redhat-linux-gnu-library/3.4", .libPaths()))' > .Rprofile && \
+  echo '.libPaths(c("~/R/x86_64-redhat-linux-gnu-library/3.6", .libPaths()))' > .Rprofile && \
   R -e 'devtools::install_local("~/velocyto.R/",dep=T,upgrade_dependencies=F)'
 
 
